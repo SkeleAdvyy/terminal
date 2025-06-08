@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>Web Terminal</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #111;
+      font-family: 'Courier New', monospace;
+      color: #d6ffe1;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .window {
+      width: 800px;
+      max-width: 95%;
+      background-color: #1e1e1e;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+    }
+
+    .title-bar {
+      background-color: #2a2a2a;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #ccc;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .circle {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .red { background-color: #ff5f56; }
+    .yellow { background-color: #ffbd2e; }
+    .green { background-color: #27c93f; }
+
+    .terminal {
+      padding: 20px;
+      height: 500px;
+      overflow-y: auto;
+      font-size: 16px;
+      white-space: pre-wrap;
+    }
+
+    .line {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .prompt {
+      color: #8aff8a;
+      margin-right: 5px;
+    }
+
+    input {
+      background: none;
+      border: none;
+      color: #8aff8a;
+      outline: none;
+      font-family: inherit;
+      font-size: 1em;
+      flex: 1;
+      caret-color: #8aff8a;
+    }
+
+    .output {
+      margin-left: 20px;
+      color: #c9c9c9;
+    }
+
+    ::selection {
+      background: #b2f7da88;
+    }
+
+    @keyframes blink {
+      to { visibility: hidden; }
+    }
+
+    .blink {
+      animation: blink 1s steps(2, start) infinite;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="window">
+    <div class="title-bar">
+      <div class="buttons">
+        <span class="circle red"></span>
+        <span class="circle yellow"></span>
+        <span class="circle green"></span>
+      </div>
+ <div id="title-user">advyy@browser</div>
+    </div>
+    <div class="terminal" id="terminal">
+      <div>Welcome to the terminal!</div>
+      <div>Type 'help' to see all available commands</div>
+    </div>
+  </div>
+
+  <script>
+    const terminal = document.getElementById('terminal');
+    const validCommands = {
+      "adduser": "Create a new user",
+      "alias": "Create an alias",
+      "cat": "Display the content of a file",
+      "cd": "Change the current directory",
+      "clear": "Clear the terminal",
+      "color": "Change the color of the terminal",
+      "cp": "Copy a file or directory",
+      "curl": "Fetch the content from a URL",
+      "date": () => new Date().toString(),
+      "echo": (args) => args.join(" "),
+      "exit": "Close the terminal (not really)",
+      "help": () => Object.entries(validCommands)
+                          .map(([cmd, desc]) => `${cmd.padEnd(15)} ${typeof desc === "string" ? desc : ""}`)
+                          .join("\n"),
+      "javascript": "Open a javascript console (not implemented)",
+      "ls": "file1.txt  file2.js  dir1/",
+      "mkdir": "Create a new directory",
+      "mv": "Move a file or directory",
+      "nano": "Edit a file (Bugged, really bugged :|)",
+      "neofetch": "user@web-terminal\nOS: BrowserOS\nShell: JS Shell",
+      "passwd": "Change user password",
+      "pwd": "/home/webuser",
+      "rm": "Delete a file or directory",
+      "screenshot": "Screenshot saved (imaginary)",
+      "sh": "Starting shell...",
+      "stats": "Uptime: 1m 23s | Commands used: 42",
+      "su": "Switching user...",
+      "touch": "Create a new file",
+      "tree": "📁 /home\n  └── 📄 file.txt",
+      "unalias": "Remove an alias",
+      "userdel": "Delete a user",
+      "usermod": "Modify a user",
+      "wget": "Downloading file...",
+      "whoami": "webuser"
+    };
+
+    function createInputLine() {
+      const line = document.createElement("div");
+      line.className = "line";
+
+      const prompt = document.createElement("span");
+      prompt.className = "prompt";
+      prompt.textContent = "advyy@chrome:/home/advyy$";
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.autofocus = true;
+
+      line.appendChild(prompt);
+      line.appendChild(input);
+      terminal.appendChild(line);
+      input.focus();
+      terminal.scrollTop = terminal.scrollHeight;
+
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          const value = input.value.trim();
+          input.disabled = true;
+          handleCommand(value);
+        }
+      });
+    }
+
+    function handleCommand(cmdLine) {
+      const [command, ...args] = cmdLine.split(" ");
+      const outputLine = document.createElement("div");
+      outputLine.className = "output";
+
+      if (command === "clear") {
+        terminal.innerHTML = '';
+        terminal.innerHTML = `<div>Welcome to the terminal!</div><div>Type 'help' to see all available commands</div>`;
+        createInputLine();
+        return;
+      }
+
+      if (validCommands.hasOwnProperty(command)) {
+        const result = validCommands[command];
+        outputLine.textContent = typeof result === "function" ? result(args) : result;
+      } else if (command !== "") {
+        outputLine.textContent = `${command}: command not found`;
+      }
+
+      terminal.appendChild(outputLine);
+      createInputLine();
+    }
+
+    createInputLine();
+
+    document.addEventListener("click", () => {
+      const inputs = document.querySelectorAll("input:not([disabled])");
+      if (inputs.length > 0) inputs[inputs.length - 1].focus();
+    });
+  function getBrowserName() {
+  const userAgent = navigator.userAgent;
+  if (userAgent.includes("Firefox")) return "firefox";
+  if (userAgent.includes("Edg")) return "edge";
+  if (userAgent.includes("OPR") || userAgent.includes("Opera")) return "opera";
+  if (userAgent.includes("Chrome")) return "chrome";
+  if (userAgent.includes("Safari")) return "safari";
+  return "browser";
+}
+
+document.getElementById("title-user").textContent = `advyy@${getBrowserName()}`;
+
+  </script>
+</body>
+</html>
